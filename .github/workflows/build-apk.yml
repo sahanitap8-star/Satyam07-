@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g. 1.0.0 or 1.0.1)'
+        description: 'Release version (e.g. 1.0.8)'
         required: true
-        default: '1.0.0'
+        default: '1.0.8'
         type: string
   push:
     branches:
@@ -65,28 +65,31 @@ jobs:
       - name: Locate and Verify APK
         id: locate_apk
         run: |
-          echo "=== Searching for generated APK files in android/app/build/outputs ==="
-          find android/app/build/outputs -type f -name "*.apk" -print
+          echo "=== Searching for generated APK files in android ==="
+          find android -type f -name "*.apk" -print
 
-          # Dynamically locate the actual generated debug APK
-          FOUND_APK=$(find android/app/build/outputs -type f -name "*debug*.apk" | head -n 1)
-          if [ -z "$FOUND_APK" ]; then
-            FOUND_APK=$(find android/app/build/outputs -type f -name "*.apk" | head -n 1)
+          EXPECTED_APK="android/app/build/outputs/apk/debug/app-debug.apk"
+          if [ -f "$EXPECTED_APK" ]; then
+            FOUND_APK="$EXPECTED_APK"
+          else
+            FOUND_APK=$(find android -type f -name "*debug*.apk" | head -n 1)
+            if [ -z "$FOUND_APK" ]; then
+              FOUND_APK=$(find android -type f -name "*.apk" | head -n 1)
+            fi
           fi
 
           if [ -z "$FOUND_APK" ] || [ ! -f "$FOUND_APK" ]; then
-            echo "::error::No APK file found in android/app/build/outputs!"
+            echo "::error::APK build failed or output APK not found!"
             echo "Listing all contents in android/app/build:"
             find android/app/build -maxdepth 4 -ls || true
             exit 1
           fi
 
-          echo "Found APK: $FOUND_APK"
           test -f "$FOUND_APK" || { echo "::error::File test verification failed for $FOUND_APK"; exit 1; }
 
+          echo "Found verified APK: $FOUND_APK"
           echo "apk_path=$FOUND_APK" >> $GITHUB_OUTPUT
           echo "APK_PATH=$FOUND_APK" >> $GITHUB_ENV
-          echo "Verified APK path successfully registered: $FOUND_APK"
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
@@ -112,26 +115,53 @@ jobs:
           echo "tag=$TAG" >> $GITHUB_OUTPUT
           echo "version=$RAW_VERSION" >> $GITHUB_OUTPUT
 
-      - name: Create GitHub Release & Upload APK
+      - name: Duplicate Tag Protection
         if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.versioning.outputs.tag }}
-          name: ARIA AI ${{ steps.versioning.outputs.tag }}
-          body: |
-            ## ARIA AI Android Debug APK
-            **Version:** `${{ steps.versioning.outputs.tag }}`
-            **Build Run:** `#${{ github.run_number }}`
-            **Commit:** `${{ github.sha }}`
-
-            ### Direct APK Download
-            Download the attached **`app-debug.apk`** from the Assets section below.
-          files: |
-            ${{ steps.locate_apk.outputs.apk_path }}
-          draft: false
-          prerelease: false
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.versioning.outputs.tag }}"
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "::error::Release tag $TAG already exists. Use a new version."
+            exit 1
+          fi
+          echo "Tag $TAG is available for release."
+
+      - name: Create GitHub Release and Upload APK Asset
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.versioning.outputs.tag }}"
+          APK_FILE="${{ steps.locate_apk.outputs.apk_path }}"
+
+          echo "Creating GitHub Release $TAG and uploading $APK_FILE..."
+          gh release create "$TAG" \
+            "$APK_FILE" \
+            --title "ARIA AI $TAG" \
+            --notes "ARIA AI Android Debug APK
+          Version: $TAG
+          Build: ${{ github.run_number }}
+          Commit: ${{ github.sha }}"
+
+      - name: Verify Release Assets
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.versioning.outputs.tag }}"
+          echo "=== Verifying GitHub Release Assets for $TAG ==="
+          RELEASE_INFO=$(gh release view "$TAG" --json url,tagName,name,assets)
+          echo "$RELEASE_INFO"
+
+          if ! echo "$RELEASE_INFO" | grep -q "app-debug.apk"; then
+            echo "::error::app-debug.apk is NOT present in the Release assets!"
+            exit 1
+          fi
+
+          echo "=== Success: app-debug.apk is verified in GitHub Release assets ==="
+          RELEASE_URL=$(echo "$RELEASE_INFO" | jq -r '.url // empty')
+          echo "Release URL: $RELEASE_URL"
+
 
 
