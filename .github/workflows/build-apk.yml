@@ -56,15 +56,44 @@ jobs:
       - name: Make Gradle Executable
         run: chmod +x android/gradlew
 
-      - name: Build Debug APK with Gradle
+      - name: Clean and Build Debug APK with Gradle
         working-directory: android
-        run: ./gradlew assembleDebug --stacktrace
+        run: |
+          ./gradlew clean
+          ./gradlew assembleDebug --stacktrace
+
+      - name: Locate and Verify APK
+        id: locate_apk
+        run: |
+          echo "=== Searching for generated APK files in android/app/build/outputs ==="
+          find android/app/build/outputs -type f -name "*.apk" -print
+
+          # Dynamically locate the actual generated debug APK
+          FOUND_APK=$(find android/app/build/outputs -type f -name "*debug*.apk" | head -n 1)
+          if [ -z "$FOUND_APK" ]; then
+            FOUND_APK=$(find android/app/build/outputs -type f -name "*.apk" | head -n 1)
+          fi
+
+          if [ -z "$FOUND_APK" ] || [ ! -f "$FOUND_APK" ]; then
+            echo "::error::No APK file found in android/app/build/outputs!"
+            echo "Listing all contents in android/app/build:"
+            find android/app/build -maxdepth 4 -ls || true
+            exit 1
+          fi
+
+          echo "Found APK: $FOUND_APK"
+          test -f "$FOUND_APK" || { echo "::error::File test verification failed for $FOUND_APK"; exit 1; }
+
+          echo "apk_path=$FOUND_APK" >> $GITHUB_OUTPUT
+          echo "APK_PATH=$FOUND_APK" >> $GITHUB_ENV
+          echo "Verified APK path successfully registered: $FOUND_APK"
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: aria-ai-debug-apk
-          path: android/app/build/outputs/apk/debug/*.apk
+          path: ${{ steps.locate_apk.outputs.apk_path }}
+          if-no-files-found: error
           retention-days: 30
 
       - name: Determine Version Tag
@@ -96,11 +125,13 @@ jobs:
             **Commit:** `${{ github.sha }}`
 
             ### Direct APK Download
-            Download the **`app-debug.apk`** file from the Assets section below.
+            Download the attached **`app-debug.apk`** from the Assets section below.
           files: |
-            android/app/build/outputs/apk/debug/app-debug.apk
+            ${{ steps.locate_apk.outputs.apk_path }}
           draft: false
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
