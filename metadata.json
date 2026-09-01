@@ -1,6 +1,6 @@
 {
-  "name": "Remix Remix Zoya - AI Voice Assistant",
-  "description": "A sassy, witty, and intelligent Indian female AI voice assistant.",
+  "name": "ARIA AI - Native Android Voice Assistant",
+  "description": "A sassy, witty, and ultra-fast native Android OS AI voice assistant with deep device integration.",
   "requestFramePermissions": [
     "microphone",
     "camera"

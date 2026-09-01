@@ -83,9 +83,11 @@ export function normalizeTranscriptForAIAR(text: string): string {
 
 /**
  * List of recognized wake words matching user's specification:
- * ["aira", "era", "aera", "hey aira", "hey era", "एरा", "हे एरा", "हीरा", "aiar", "hey aiar"]
+ * ["aria", "hey aria", "aira", "era", "aera", "hey aira", "hey era", "एरिया", "हे एरिया", "एरा", "हे एरा", "हीरा", "aiar", "hey aiar"]
  */
 export const WAKE_WORDS_LIST = [
+  "aria",
+  "hey aria",
   "aira",
   "era",
   "aera",
@@ -93,13 +95,15 @@ export const WAKE_WORDS_LIST = [
   "hey era",
   "hey aiar",
   "aiar",
+  "एरिया",
+  "हे एरिया",
   "एरा",
   "हे एरा",
   "हीरा",
   "हे हीरा",
 ];
 
-export const STRICT_AIAR_WAKE_REGEX = /^(?:(hey\s+aira|hey\s+era|hey\s+aera|hey\s+aiar|aira|era|aera|aiar|हे\s+एरा|हे\s+हीरा|एरा|हीरा))(?:\s+(.*))?$/i;
+export const STRICT_AIAR_WAKE_REGEX = /^(?:(hey\s+aria|aria|hey\s+aira|hey\s+era|hey\s+aera|hey\s+aiar|aira|era|aera|aiar|हे\s+एरिया|एरिया|हे\s+एरा|हे\s+हीरा|एरा|हीरा))(?:\s+(.*))?$/i;
 
 export function checkExactAIARTrigger(rawTranscript: string): {
   isTriggered: boolean;
@@ -128,7 +132,7 @@ export function checkExactAIARTrigger(rawTranscript: string): {
   }
 
   // 2. Exact word boundary check for Hindi & English variants anywhere in transcript
-  const boundaryRegex = /(?:^|\s)(hey\s+aira|hey\s+era|hey\s+aera|hey\s+aiar|aira|era|aera|aiar|हे\s+एरा|हे\s+हीरा|एरा|हीरा)(?:\s+|$)(.*)/i;
+  const boundaryRegex = /(?:^|\s)(hey\s+aria|aria|hey\s+aira|hey\s+era|hey\s+aera|hey\s+aiar|aira|era|aera|aiar|हे\s+एरिया|एरिया|हे\s+एरा|हे\s+हीरा|एरा|हीरा)(?:\s+|$)(.*)/i;
   const boundaryMatch = boundaryRegex.exec(normalized);
   if (boundaryMatch) {
     const matchedWakeKey = boundaryMatch[1].trim();

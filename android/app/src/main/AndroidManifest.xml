@@ -94,6 +94,13 @@
             </intent-filter>
         </activity>
 
+        <!-- Settings Activity -->
+        <activity
+            android:name=".SettingsActivity"
+            android:exported="true"
+            android:label="@string/title_activity_settings"
+            android:theme="@style/Theme.Aria.NoActionBar" />
+
         <!-- 10. NOTIFICATION LISTENER SERVICE -->
         <service
             android:name=".service.AriaNotificationListener"

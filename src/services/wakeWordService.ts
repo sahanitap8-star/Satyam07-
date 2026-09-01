@@ -9,11 +9,11 @@ import {
 } from "./microphoneManager";
 
 /**
- * Strict case-insensitive Regex for phrases: /\b(hey\s+)?aiar\b/i
- * Accurately matches "Hey Aiar", "hey aiar", "Aiar", "aiar" with full word boundaries,
+ * Strict case-insensitive Regex for phrases: /\b(hey\s+)?(aria|aiar)\b/i
+ * Accurately matches "Hey Aria", "hey aria", "Aria", "aria", "Hey Aiar", "hey aiar", "Aiar", "aiar" with full word boundaries,
  * strictly ignoring partial matches like "AI", "iar", "hey ai", "airplane", etc.
  */
-export const STRICT_AIAR_REGEX = /\b(hey\s+)?aiar\b/i;
+export const STRICT_AIAR_REGEX = /\b(hey\s+)?(aria|aiar)\b/i;
 
 export { STRICT_AIAR_WAKE_REGEX, WAKE_WORDS_LIST };
 

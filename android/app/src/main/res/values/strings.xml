@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">ARIA AI</string>
+    <string name="title_activity_main">ARIA AI</string>
+    <string name="package_name">com.satyam.aria</string>
+    <string name="custom_url_scheme">com.satyam.aria</string>
+    
+    <!-- Accessibility Service -->
+    <string name="accessibility_service_label">Aria Action &amp; UI Automation</string>
+    <string name="accessibility_service_description">ARIA AI uses Accessibility to assist users with voice-driven navigation, clicking UI buttons, scrolling screens, and interacting with controls upon user request. ARIA AI never accesses passwords, lock screen security, or sensitive credentials.</string>
+
+    <!-- Notification Service -->
+    <string name="notification_listener_label">Aria Notification Intelligence</string>
+    <string name="notification_channel_id">aria_service_channel</string>
+    <string name="notification_channel_name">Aria Assistant Active Service</string>
+    <string name="notification_channel_desc">Active assistant service and wake-word monitor</string>
+
+    <!-- Settings Activity -->
+    <string name="title_activity_settings">ARIA AI Settings &amp; Permissions</string>
+</resources>
