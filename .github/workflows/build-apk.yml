@@ -50,6 +50,9 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Setup Gradle 8.11.1
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -58,7 +61,9 @@ jobs:
       - name: Clean and Build Debug APK with Gradle
         working-directory: android
         run: |
+          yes | "${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses 2>/dev/null || true
           gradle clean assembleDebug --stacktrace
+
 
       - name: Locate and Verify APK
         id: locate_apk

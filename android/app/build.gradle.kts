@@ -59,5 +59,5 @@ dependencies {
 
     // Capacitor Native Core & Android Bridge
     implementation(project(":capacitor-android"))
-    implementation(project(":capacitor-cordova-android-plugins"))
 }
+
