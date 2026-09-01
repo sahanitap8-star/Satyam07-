@@ -65,31 +65,32 @@ jobs:
       - name: Locate and Verify APK
         id: locate_apk
         run: |
-          echo "=== Searching for generated APK files in android ==="
-          find android -type f -name "*.apk" -print
+          echo "=== Searching for generated APK files across entire workspace ==="
+          find . -type f -name "*.apk" -print
 
-          EXPECTED_APK="android/app/build/outputs/apk/debug/app-debug.apk"
-          if [ -f "$EXPECTED_APK" ]; then
-            FOUND_APK="$EXPECTED_APK"
-          else
-            FOUND_APK=$(find android -type f -name "*debug*.apk" | head -n 1)
-            if [ -z "$FOUND_APK" ]; then
-              FOUND_APK=$(find android -type f -name "*.apk" | head -n 1)
-            fi
+          FOUND_APK=$(find android/app/build -type f -name "*debug*.apk" 2>/dev/null | head -n 1)
+          if [ -z "$FOUND_APK" ]; then
+            FOUND_APK=$(find . -type f -name "*debug*.apk" 2>/dev/null | head -n 1)
+          fi
+          if [ -z "$FOUND_APK" ]; then
+            FOUND_APK=$(find . -type f -name "*.apk" 2>/dev/null | head -n 1)
           fi
 
           if [ -z "$FOUND_APK" ] || [ ! -f "$FOUND_APK" ]; then
-            echo "::error::APK build failed or output APK not found!"
-            echo "Listing all contents in android/app/build:"
-            find android/app/build -maxdepth 4 -ls || true
+            echo "::error::Gradle did not generate an APK or file was not found!"
+            echo "=== Listing android/app directory structure ==="
+            find android/app -maxdepth 5 -ls || true
             exit 1
           fi
 
-          test -f "$FOUND_APK" || { echo "::error::File test verification failed for $FOUND_APK"; exit 1; }
+          # Strip leading ./ if present for consistent pathing
+          CLEAN_PATH=$(echo "$FOUND_APK" | sed 's|^\./||')
+          echo "Found APK: $CLEAN_PATH"
+          test -f "$CLEAN_PATH" || { echo "::error::File test verification failed for $CLEAN_PATH"; exit 1; }
 
-          echo "Found verified APK: $FOUND_APK"
-          echo "apk_path=$FOUND_APK" >> $GITHUB_OUTPUT
-          echo "APK_PATH=$FOUND_APK" >> $GITHUB_ENV
+          echo "apk_path=$CLEAN_PATH" >> $GITHUB_OUTPUT
+          echo "APK_PATH=$CLEAN_PATH" >> $GITHUB_ENV
+          echo "Verified APK path successfully registered: $CLEAN_PATH"
 
       - name: Upload Debug APK Artifact
         uses: actions/upload-artifact@v4

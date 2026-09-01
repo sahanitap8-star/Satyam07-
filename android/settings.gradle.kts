@@ -12,7 +12,7 @@ pluginManagement {
     }
 }
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositoriesMode.set(RepositoriesMode.PREFER_PROJECT)
     repositories {
         google()
         mavenCentral()
@@ -21,3 +21,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "AriaAI"
 include(":app")
+
+val capacitorSettings = file("capacitor.settings.gradle")
+if (capacitorSettings.exists()) {
+    apply(from = "capacitor.settings.gradle")
+}
+
