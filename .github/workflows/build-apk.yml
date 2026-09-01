@@ -2,9 +2,18 @@ name: Build ARIA AI APK
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0 or 1.0.1)'
+        required: true
+        default: '1.0.0'
+        type: string
   push:
     branches:
       - main
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -14,6 +23,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,3 +63,43 @@ jobs:
           name: aria-ai-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           retention-days: 30
+
+      - name: Determine Version Tag
+        if: ${{ github.event.inputs.version != '' }}
+        id: versioning
+        run: |
+          RAW_VERSION="${{ github.event.inputs.version }}"
+          if [[ $RAW_VERSION == v* ]]; then
+            TAG="$RAW_VERSION"
+          else
+            TAG="v$RAW_VERSION"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$RAW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release & Upload APK
+        if: ${{ github.event.inputs.version != '' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.versioning.outputs.tag }}
+          name: ARIA AI ${{ steps.versioning.outputs.tag }}
+          body: |
+            ## ARIA AI Android Debug APK
+            **Version:** `${{ steps.versioning.outputs.tag }}`
+            **Commit:** `${{ github.sha }}`
+
+            ### Release Assets
+            Download the attached **`app-debug.apk`** below and install it directly on your Android device (Android 8.0+ / API 26+).
+
+            ### Features Included
+            - ARIA AI multimodal voice assistant with Gemini AI integration
+            - Native Capacitor 8.5.1 bridge & Kotlin native service integration
+            - Accessibility automation & Notification summary services
+            - Strict wake-word detection for "Hey Aria"
+          files: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
