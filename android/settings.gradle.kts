@@ -22,8 +22,14 @@ dependencyResolutionManagement {
 rootProject.name = "AriaAI"
 include(":app")
 
-val capacitorSettings = file("capacitor.settings.gradle")
-if (capacitorSettings.exists()) {
-    apply(from = "capacitor.settings.gradle")
+// Capacitor Android Module
+include(":capacitor-android")
+project(":capacitor-android").projectDir = file("../node_modules/@capacitor/android/capacitor")
+
+// Capacitor Cordova Plugins Module if present
+val cordovaPluginsDir = file("capacitor-cordova-android-plugins")
+if (cordovaPluginsDir.exists()) {
+    include(":capacitor-cordova-android-plugins")
+    project(":capacitor-cordova-android-plugins").projectDir = cordovaPluginsDir
 }
 

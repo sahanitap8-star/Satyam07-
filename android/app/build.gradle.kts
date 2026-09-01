@@ -58,6 +58,6 @@ dependencies {
     implementation("androidx.webkit:webkit:1.12.1")
 
     // Capacitor Native Core & Android Bridge
-    implementation("com.capacitorjs:core:8.5.1")
-    implementation("com.capacitorjs:android:8.5.1")
+    implementation(project(":capacitor-android"))
+    implementation(project(":capacitor-cordova-android-plugins"))
 }
