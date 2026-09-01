@@ -68,10 +68,13 @@ jobs:
           retention-days: 30
 
       - name: Determine Version Tag
-        if: ${{ github.event.inputs.version != '' }}
         id: versioning
         run: |
-          RAW_VERSION="${{ github.event.inputs.version }}"
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            RAW_VERSION="${{ github.event.inputs.version }}"
+          else
+            RAW_VERSION="1.0.${{ github.run_number }}"
+          fi
           if [[ $RAW_VERSION == v* ]]; then
             TAG="$RAW_VERSION"
           else
@@ -81,7 +84,7 @@ jobs:
           echo "version=$RAW_VERSION" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release & Upload APK
-        if: ${{ github.event.inputs.version != '' }}
+        if: ${{ github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.versioning.outputs.tag }}
@@ -89,16 +92,11 @@ jobs:
           body: |
             ## ARIA AI Android Debug APK
             **Version:** `${{ steps.versioning.outputs.tag }}`
+            **Build Run:** `#${{ github.run_number }}`
             **Commit:** `${{ github.sha }}`
 
-            ### Release Assets
-            Download the attached **`app-debug.apk`** below and install it directly on your Android device (Android 8.0+ / API 26+).
-
-            ### Features Included
-            - ARIA AI multimodal voice assistant with Gemini AI integration
-            - Native Capacitor 8.5.1 bridge & Kotlin native service integration
-            - Accessibility automation & Notification summary services
-            - Strict wake-word detection for "Hey Aria"
+            ### Direct APK Download
+            Download the **`app-debug.apk`** file from the Assets section below.
           files: |
             android/app/build/outputs/apk/debug/app-debug.apk
           draft: false
